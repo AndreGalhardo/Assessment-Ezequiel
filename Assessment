@@ -1,0 +1,142 @@
+import requests
+from bs4 import BeautifulSoup
+import pygame
+import io
+import sys
+
+def main():
+
+
+    gameIcon = pygame.image.load('INF.jpg')
+
+
+    def mostra_texto(texto, tela, pos_y, pos_x):
+        pygame.font.init()
+        CALIBRI21 = pygame.font.SysFont('Calibri', 21)
+        text = CALIBRI21.render(texto, True, (0, 255, 0))
+        tela.blit(text, (pos_y, pos_x))
+
+
+    def mostra_texto2(texto, tela, pos_y, pos_x):
+        pygame.font.init()
+        ARIAL21 = pygame.font.SysFont('Arial', 21)
+        text = ARIAL21.render(texto, True, (255, 165, 0))
+        tela.blit(text, (pos_y, pos_x))
+
+
+    def mostra_texto3(texto, tela, pos_y, pos_x):
+        pygame.font.init()
+        CALIBRI21 = pygame.font.SysFont('Lucida Sans', 21)
+        text = CALIBRI21.render(str(texto), True, (128, 0, 128))
+        tela.blit(text, (pos_y, pos_x))
+
+
+    def getContent():
+        usuario = 'ebertti'
+        url = f"https://github.com/{usuario}"
+        response = requests.get(url).text
+
+        if response.count('404'):
+            print('usuario n existe')
+        else:
+            content = BeautifulSoup(response, 'html.parser')
+            return content
+
+
+    def getData(content):
+        repositorio = []
+
+        repos = content.find('div', class_="js-pinned-items-reorder-container")
+
+        repo = repos.find_all('span', class_="repo")
+
+        for i in repo:
+            repositorio.append(i.get('title'))
+
+        dados = {
+            "img": content.find('img', class_="avatar avatar-user width-full border bg-white")['src'],
+            "nome": content.find('span', class_="p-name vcard-fullname d-block overflow-hidden").text,
+            "login": content.find('span', class_="p-nickname vcard-username d-block").text,
+            "bio": content.find('div', class_="p-note user-profile-bio mb-3 js-user-profile-bio f4").text,
+            "followers": content.find('a', class_='link-gray no-underline no-wrap').text.replace('\n', ' '),
+            "stars": int(content.find_all('a', class_="link-gray no-underline no-wrap")[2].text.replace('\n', ' ')),
+            "repositorios": repositorio,
+            "texto": ("Stars"),
+            "texto2": ("Repositórios:")
+
+        }
+        return dados
+
+
+    class Game:
+        def __init__(self):
+            self.altura_tela = 800
+            self.altura_tela = 600
+            self.x = 400
+            self.y = 300
+            self.AZUL = (0, 0, 255)
+
+        pygame.init()
+
+        content = getContent()
+        dados = getData(content)
+
+
+        tela = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption('Perfil do Professor Ezequiel')
+        pygame.display.set_icon(gameIcon)
+
+        mostra_texto(dados['nome'], tela, 40, 10)
+        mostra_texto(dados['login'], tela, 40, 35)
+        mostra_texto2(dados['bio'], tela, 40, 65)
+        mostra_texto2(dados['followers'], tela, 30, 95)
+        mostra_texto3(dados['stars'], tela, 40, 120)
+        mostra_texto3(dados['texto'], tela, 140, 120)
+        mostra_texto2(dados['texto2'], tela, 480, 150)
+        contador = 50
+
+        for i in (dados['repositorios']):
+            mostra_texto3(i, tela, 480, 150 + contador)
+            contador += 50
+
+
+
+
+        reat = pygame.Rect((50, 150, 20, 20))
+
+        r = requests.get(dados['img'])
+        img = io.BytesIO(r.content)
+        perfil_img = pygame.image.load(img)
+        tela.blit(perfil_img, reat)
+
+        pygame.init()
+        cont = 40
+        clock = pygame.time.Clock()
+
+
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                if cont == 40:
+                    pygame.display.update()
+
+                    cont = 0
+
+                    clock.tick(40)
+                    cont = cont + 1
+                    print(cont)
+
+
+
+
+    game = Game()
+
+if __name__ == "__main__":
+
+    main()
+
+                
